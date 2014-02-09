@@ -7,7 +7,8 @@ d3.csv("bridge_data.csv", function(error, flights) {
   var formatNumber = d3.format(",d"),
       formatChange = d3.format("+,d"),
       formatDate = d3.time.format("%B %d, %Y"),
-      formatTime = d3.time.format("%I:%M %p");
+      formatTime = d3.time.format("%I:%M %p")
+      formatPercent = d3.format('%0');
 
   // A nest operator, for grouping the flight list.
   var nestByDate = d3.nest()
@@ -30,7 +31,6 @@ flights.forEach(function(d, i) {
 	data.push({index:index, date:new Date(d.Date), direction:'south', value:Number(d['Fremont Bridge SB'])})
   });
 
-console.log(data)
 
   // Create the crossfilter for the relevant dimensions and groups.
   var flight = crossfilter(data),
@@ -89,7 +89,11 @@ var minDate =  d3.min(dates.all().map(function(d) {return d.key}))
   
   // Render the total.
   d3.selectAll("#total")
-      .text(formatNumber(flight.size()));
+      .text(formatNumber(flight.groupAll().reduceSum(function(d) {return d.value}).value()));
+	
+
+  d3.selectAll("#percent")
+      .text(formatPercent(all.reduceSum(function(d) {return d.value}).value()/flight.groupAll().reduceSum(function(d) {return d.value}).value()));
 
   renderAll();
 
@@ -101,7 +105,16 @@ var minDate =  d3.min(dates.all().map(function(d) {return d.key}))
   // Whenever the brush moves, re-rendering everything.
   function renderAll() {
     chart.each(render);
-    d3.select("#active").text(formatNumber(all.value()));
+    console.log('renderall ', all)
+    d3.select("#active").text(formatNumber(all.reduceSum(function(d) {return d.value}).value()));
+    
+
+    var total = Number(d3.select('#total').text().replace(/,/g, ''))
+    console.log(all.reduceSum(function(d) {return d.value}).value(), total)
+	 d3.selectAll("#percent")
+      .text(formatPercent(all.reduceSum(function(d) {return d.value}).value()/total));
+
+  
   }
 
 
@@ -138,7 +151,6 @@ var minDate =  d3.min(dates.all().map(function(d) {return d.key}))
 //           height = y.range()[0];
 
       // y.domain([maxHourBikers,0 ]);
-	console.log('yscale ', y.range(), y.domain())
       div.each(function() {
         var div = d3.select(this),
             g = div.select("g");
@@ -157,7 +169,6 @@ var minDate =  d3.min(dates.all().map(function(d) {return d.key}))
             .append("g")
               .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-		console.log('clip ', group.all())
 g.append("clipPath")
               .attr("id", "clip-" + id)
             .append("rect")
@@ -167,9 +178,10 @@ g.append("clipPath")
               g.selectAll('.bar').data(group.all())
               		.enter().append('rect')
               		.attr('x', function(d) {return x(d.key)})
-              		.attr('y', function(d) {console.log(height,y(d.value),d.value, maxDayBikers);return height - y(d.value)})
+              		.attr('y', function(d) {return height - y(d.value)})
               		.attr('width', 1)
               		.attr('height', function(d) {return y(d.value)})
+              		.attr('class', 'bar')
 // 
 //           g.selectAll(".bar")
 //               .data(["background", "foreground"])
@@ -207,8 +219,10 @@ g.append("clipPath")
                 .attr("width", x(extent[1]) - x(extent[0]));
           }
         }
-
-        g.selectAll(".bar").attr("d", barPath);
+        g.selectAll(".bar").attr('x', function(d) {return x(d.key)})
+              		.attr('y', function(d) {return height - y(d.value)})
+              		.attr('width', 1)
+              		.attr('height', function(d) {return y(d.value)})
       });
 
       function barPath(groups) {
@@ -293,6 +307,7 @@ g.append("clipPath")
     };
 
     chart.filter = function(_) {
+
       if (_) {
         brush.extent(_);
         dimension.filterRange(_);
