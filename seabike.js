@@ -9,6 +9,22 @@ d3.csv("bridge_data.csv", function(error, flights) {
       formatDate = d3.time.format("%B %d, %Y"),
       formatTime = d3.time.format("%I:%M %p")
       formatPercent = d3.format('%0');
+      
+	var formatTitleDate = function(d) {
+		var monthNames = [ "Jan.", "Feb.", "March", "April", "May", "June",
+   				 "July", "Aug.", "Sept.", "Oct.", "Nov.", "Dec." ];
+   		var month = monthNames[d.getMonth()]
+   		var date = d.getDate()
+   		var year = d.getFullYear()
+		return month + ' ' + date + ', ' + year	
+	}
+	var formatTitleTime = function(d) {
+		var d = Math.round(d)
+		var hour = (d == 0 | d == 12 | d == 24)? "12" : String(d%12);
+		var meridian = d<12 ? "AM" : "PM"
+		var time = hour + ':00 ' + meridian
+		return time
+	}
 
   // A nest operator, for grouping the flight list.
   var nestByDate = d3.nest()
@@ -42,16 +58,12 @@ flights.forEach(function(d, i) {
       hour = flight.dimension(function(d) { return d.date.getHours() + d.date.getMinutes() / 60; }),
       hours = hour.group(Math.floor).reduceSum(function(d) {return d.value})
       hourBikers =hour.group(Math.floor).reduceSum(function(d) {return d.value})
-//       hourBikers = date.group(d3.time.hours).reduceSum(function(d) {return d.value})
-      
-      
-     //  delay = flight.dimension(function(d) { return Math.max(-60, Math.min(149, d.delay)); }),
-//       delays = delay.group(function(d) { return Math.floor(d / 10) * 10; }),
-//       distance = flight.dimension(function(d) { return Math.min(1999, d.distance); }),
-//       distances = distance.group(function(d) { return Math.floor(d / 50) * 50; });
 
 var minDate =  d3.min(dates.all().map(function(d) {return d.key})) 
 	var maxDate =  d3.max(dates.all().map(function(d) {return d.key})) 
+
+d3.select('#startdate').text(formatTitleDate(minDate))
+d3.select('#enddate').text(formatTitleDate(maxDate))
 	var maxDayBikers = d3.max(dateBikers.all().map(function(d) {return d.value})) 
 	var maxHourBikers = d3.max(hourBikers.all().map(function(d) {return d.value}))
   var charts = [
@@ -91,6 +103,8 @@ var minDate =  d3.min(dates.all().map(function(d) {return d.key}))
   d3.selectAll("#total")
       .text(formatNumber(flight.groupAll().reduceSum(function(d) {return d.value}).value()));
 	
+ d3.selectAll("#numbikers")
+      .text(formatNumber(flight.groupAll().reduceSum(function(d) {return d.value}).value()));
 
   d3.selectAll("#percent")
       .text(formatPercent(all.reduceSum(function(d) {return d.value}).value()/flight.groupAll().reduceSum(function(d) {return d.value}).value()));
@@ -108,9 +122,9 @@ var minDate =  d3.min(dates.all().map(function(d) {return d.key}))
     console.log('renderall ', all)
     d3.select("#active").text(formatNumber(all.reduceSum(function(d) {return d.value}).value()));
     
+  d3.select("#numbikers").text(formatNumber(all.reduceSum(function(d) {return d.value}).value()));
 
     var total = Number(d3.select('#total').text().replace(/,/g, ''))
-    console.log(all.reduceSum(function(d) {return d.value}).value(), total)
 	 d3.selectAll("#percent")
       .text(formatPercent(all.reduceSum(function(d) {return d.value}).value()/total));
 
@@ -166,6 +180,7 @@ var minDate =  d3.min(dates.all().map(function(d) {return d.key}))
           g = div.append("svg")
               .attr("width", width + margin.left + margin.right)
               .attr("height", height + margin.top + margin.bottom)
+              .attr('id', id)
             .append("g")
               .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
@@ -182,15 +197,7 @@ g.append("clipPath")
               		.attr('width', 1)
               		.attr('height', function(d) {return y(d.value)})
               		.attr('class', 'bar')
-// 
-//           g.selectAll(".bar")
-//               .data(["background", "foreground"])
-//             .enter().append("path")
-//               .attr("class", function(d) { return d + " bar"; })
-//               .datum(group.all());
-// 
-//           g.selectAll(".foreground.bar")
-//               .attr("clip-path", "url(#clip-" + id + ")");
+
 
           g.append("g")
               .attr("class", "axis")
@@ -225,17 +232,7 @@ g.append("clipPath")
               		.attr('height', function(d) {return y(d.value)})
       });
 
-      function barPath(groups) {
-        var path = [],
-            i = -1,
-            n = groups.length,
-            d;
-        while (++i < n) {
-          d = groups[i];
-          path.push("M", x(d.key), ",", height, "V", y(d.value), "h9V", height);
-        }
-        return path.join("");
-      }
+      
 
       function resizePath(d) {
         var e = +(d == "e"),
@@ -259,8 +256,23 @@ g.append("clipPath")
     });
 
     brush.on("brush.chart", function() {
+    	console.log('id ', this.parentNode.parentNode.id)
+    	 var total = Number(d3.select('#total').text().replace(/,/g, ''))
+	 d3.selectAll("#percentage")
+      .text(' (' + formatPercent(all.reduceSum(function(d) {return d.value}).value()/total) + ' of total)');
+
       var g = d3.select(this.parentNode),
           extent = brush.extent();
+          console.log(extent)
+          if(this.parentNode.parentNode.id == 0) {
+          	d3.select('#startdate').text(formatTitleDate(extent[0]))
+			d3.select('#enddate').text(formatTitleDate(extent[1]))
+          }
+          else if(this.parentNode.parentNode.id == 1) {
+          
+           	d3.select('#starttime').text('(' + formatTitleTime(extent[0]) + '-')
+           	d3.select('#endtime').text(formatTitleTime(extent[1]) + ')')
+          }
       if (round) g.select(".brush")
           .call(brush.extent(extent = extent.map(round)))
         .selectAll(".resize")
@@ -277,6 +289,11 @@ g.append("clipPath")
         div.select(".title a").style("display", "none");
         div.select("#clip-" + id + " rect").attr("x", null).attr("width", "100%");
         dimension.filterAll();
+        d3.selectAll("#percentage").text('')
+    	d3.select('#startdate').text(formatTitleDate(minDate))
+		d3.select('#enddate').text(formatTitleDate(maxDate))
+		d3.select('#starttime').text('')
+    	d3.select('#endtime').text('')
       }
     });
 
