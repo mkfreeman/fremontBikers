@@ -43,6 +43,7 @@ Bar.prototype.build = function() {
 					self.brushG.call(self.brush)
 					self.rangeDiv.selectAll('.reset').style('opacity', '.3').style('cursor', 'auto')
 					self.settings.limits = [self.settings.xmin, self.settings.xmax]
+					d3.select('#' + self.settings.id + '-range-div span').text(self.settings.titleFormatter(self.settings.limits))
 					self.settings.updateAll()
 				})
 				.style('opacity', '.3').style('cursor', 'auto')
@@ -91,7 +92,6 @@ Bar.prototype.build = function() {
 Bar.prototype.setBrush = function() {
 	var self = this
 	var updateFunction = function() {
-// 		var extent = self.brush.extent().map(function(d) {return typeof(self.settings.round) == 'function' ? self.settings.round(d): d})
 		var extent = self.brush.extent().map(function(d) {return typeof(self.settings.round) == 'function' ? self.settings.round(d): d})
 		if(extent[0].valueOf() == extent[1].valueOf()) {
 			self.settings.dimension.filter(null)
