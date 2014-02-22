@@ -1,47 +1,45 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
-<title>SeaBike Project</title>
+<title>Fremont Bikers</title>
 <head>
+	<!-- libraries -->
 	<script src="lib/crossfilter.v1.min.js"></script>
 	<script src="lib/d3.v3.min.js"></script>
-	<script src="js/settings.js"></script>
-		<script src="js/charts/bar.js"></script>
+	<script type="text/javascript" src="lib/jquery-1.8.2.min.js"></script>
 
+	<script type="text/javascript" src="lib/jquery.poshytip.min.js"></script> 
+	<!-- js files -->
+	<script src="js/settings.js"></script>
+	<script src="js/charts/bar.js"></script>
+	<script src="js/charts/pie.js"></script>
 	<script src="js/seabike.js"></script>
+	
+	<!-- css files -->
 	<link type="text/css" rel="stylesheet" href="css/seabike.css"/>
+	<link type="text/css" rel="stylesheet" href="css/tip.css"/>
+
+	<!-- twitter -->
 </head>
 
-<div id="body">
-<div id="title">Fremont Bridge bikers between 
-	<span id="startdate"></span> and 
-	<span id="enddate"></span> 
-	<span id="starttime"></span> 
-	<span id="endtime"></span>: 
-	<span id="numbikers"></span>
-	<span id="percentage"></span>
-</div>
-
-<div id="charts">
-<div id="date-chart" class="chart">
-    <div class="title">Date</div>
-  </div>
-  <div id="hour-chart" class="chart">
-    <div class="title">Time of Day</div>
-  </div>
-  
-</div>
-
-<aside id="totals"><span id="active">-</span> of <span id="total">-</span> rides <span id="percent">-</span> selected.</aside>
-
-<footer>
-  
-</footer>
-
-</div>
-
-
-
-<script>
-
-
-</script>
+<body>
+	<div id="header">
+		<span>
+		<a href="https://twitter.com/share" class="twitter-share-button" data-via="mf_viz" data-count="none">Tweet</a>
+		</span>
+	</div>
+	<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+	<div id="main"></div>
+	
+	<!-- Instantiate app -->
+	<script type="text/javascript">
+		var app = new App()
+	</script>
+	<div id="bottom">
+		<span>By  </span>
+		<a href = "http://www.linkedin.com/pub/michael-freeman/66/363/322" target="_blank">Mike Freeman</a>
+		<span>, using </span>
+		<a href="https://data.seattle.gov/Transportation/Fremont-Bridge-Hourly-Bicycle-Counts-by-Month-Octo/65db-xm6k" target="_blank">data</a>
+	 	<span>from </span>
+	 	<a href="https://data.seattle.gov/" target="_blank">data.seattle.gov</a>
+	</div>
+</body>

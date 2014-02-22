@@ -1,267 +1,140 @@
 var Bar = function(sets) {
 	var self = this
-	console.log('bar settings ', sets)
 	self.settings = sets
-	self.cf = self.settings.cf
+	self.data = self.settings.data
 	self.init()
 }
 
 Bar.prototype.init = function() {
 	var self = this
 	self.prepData()
+	self.setBrush()
 	self.build()
 }
 
 Bar.prototype.prepData = function() {
-	var self = this
-	
-	// Prep raw data
-
-	self.cf.dim = self.cf.data.dimension(function(d) { return d.date;})
-	self.cf.values = self.cf.dim.group(d3.time.day).reduceSum(function(d) {return d.value})
-	
+	var self = this	
 	// Get min/max
-	var xValues = self.cf.values.all().map(function(d) {return d.key})
-	var yValues = self.cf.values.all().map(function(d) {return d.value})
-	self.settings.xmin = d3.min(xValues)
-	self.settings.xmax = d3.max(xValues)
-	self.settings.ymax = d3.max(yValues)	
+	var xValues = self.data.all().map(function(d) {return d.key})
+	var yValues = self.data.all().map(function(d) {return d.value})
+	self.settings.xmin = typeof(self.settings.padding.left) == 'number'? d3.min(xValues) - self.settings.padding.left: d3.min(xValues)
+	self.settings.xmax = typeof(self.settings.padding.right) == 'number'? d3.max(xValues) + self.settings.padding.right: d3.max(xValues)
+	self.settings.limits = [self.settings.xmin, self.settings.xmax]
+	self.settings.ymin = d3.min(yValues)
+	self.settings.ymax = d3.max(yValues)
+	self.settings.y.range([0, self.settings.height]).domain([self.settings.ymax, 0])
+	self.settings.x.range([0, self.settings.width]).domain([self.settings.xmin,self.settings.xmax])
+		
 }
 
 
 Bar.prototype.build = function() {
 	var self = this
-	var charts = [
-	barChart()
-			.dimension(self.cf.dim)
-			.group(self.cf.values)
-			.round(d3.time.day.round)
-			.y(d3.scale.linear().range([0, settings.height]).domain([0,self.settings.ymax]))
-		  .x(d3.time.scale()
-			.domain([self.settings.xmin,self.settings.xmax])
-			.rangeRound([0, 1100]))
-	]
-	var chart = d3.selectAll(".chart")
-		  .data(charts)
-		  .each(function(chart) { chart.on("brush", renderAll).on("brushend", renderAll); });
-
-
-	  renderAll();
-
-	  // Renders the specified chart or list.
-	  function render(method) {
-		d3.select(this).call(method);
-	  }
-
-	  // Whenever the brush moves, re-rendering everything.
-	  function renderAll() {
-		chart.each(render);
-		d3.select("#active").text(settings.formatters.number(self.cf.all.reduceSum(function(d) {return d.value}).value()));
+	self.div = d3.select('#' + self.settings.container).append('div').attr('id', self.settings.id + '-div').attr('class', 'chart')
+	self.titleDiv = self.div.append('div').attr('id', self.settings.id + '-title-div').attr('class', 'title-div').text(self.settings.title)
+	self.rangeDiv = self.div.append('div').attr('id', self.settings.id + '-range-div').attr('class', 'range-div')
+	self.rangeDiv.append('span').text(self.settings.titleFormatter([self.settings.xmin,self.settings.xmax]))
+	self.rangeDiv.append('span')
+				.attr('class', 'reset')
+				.text('reset')
+				.on('click', function(){
+					self.settings.dimension.filter(null)
+					self.brush.clear()
+					self.brushG.call(self.brush)
+					self.rangeDiv.selectAll('.reset').style('opacity', '.3').style('cursor', 'auto')
+					self.settings.limits = [self.settings.xmin, self.settings.xmax]
+					self.settings.updateAll()
+				})
+				.style('opacity', '.3').style('cursor', 'auto')
+				
+	self.svg = self.div.append("svg")
+				  .attr("width", self.settings.width + self.settings.margin.left + self.settings.margin.right)
+				  .attr("height", self.settings.height + self.settings.margin.top + self.settings.margin.bottom)
+				  .attr('id', self.settings.id + '-svg')
 	
-	  d3.select("#numbikers").text(settings.formatters.number(self.cf.all.reduceSum(function(d) {return d.value}).value()));
+	self.g = self.svg.append("g")
+				  .attr("transform", "translate(" + self.settings.margin.left + "," + self.settings.margin.top + ")");
 
-		var total = Number(d3.select('#total').text().replace(/,/g, ''))
-		 d3.selectAll("#percent")
-		  .text(settings.formatters.percent(self.cf.all.reduceSum(function(d) {return d.value}).value()/total));
+	self.g.selectAll('.bar').data(self.data.all())
+				.enter().append('rect')
+				.attr('x', function(d) {return self.settings.x(d.key)})
+				.attr('height', function(d) {return self.settings.height - self.settings.y(d.value)})
+				.attr('width', 1)
+				.attr('y', function(d) {return self.settings.y(d.value)})
+				.attr('class', 'bar')
 
-  
-	  }
+	self.xAxisScale = d3.svg.axis().orient("bottom")
+						.scale(self.settings.x)
+						.tickFormat(self.settings.format.x)
+						.ticks(self.settings.ticks.x)
+ 	self.xAxis = self.g.append("g")
+				  .attr("class", "axis")
+				  .attr("transform", "translate(0," + self.settings.height + ")")
+				  .call(self.xAxisScale);
 
+	self.yAxisScale = d3.svg.axis().orient("left")
+						.scale(self.settings.y)
+						.tickFormat(self.settings.format.y)
+ 	self.yAxis = self.g.append("g")
+				  .attr("class", "axis")
+				  .attr("transform", "translate(0," + 0 + ")")
+				  .call(self.yAxisScale);
+				  
+	self.brushG = self.svg.append('g')	  
+					.attr("transform", "translate(" + self.settings.margin.left + "," + self.settings.margin.top + ")")
+					.attr('class', 'brush')
+					.call(self.brush)
+	self.brushG.selectAll('rect').attr('height', self.settings.height)
+	if(typeof(self.settings.poshy) == 'function') self.settings.poshy(self)
+}
 
+Bar.prototype.setBrush = function() {
+	var self = this
+	var updateFunction = function() {
+// 		var extent = self.brush.extent().map(function(d) {return typeof(self.settings.round) == 'function' ? self.settings.round(d): d})
+		var extent = self.brush.extent().map(function(d) {return typeof(self.settings.round) == 'function' ? self.settings.round(d): d})
+		if(extent[0].valueOf() == extent[1].valueOf()) {
+			self.settings.dimension.filter(null)
+			self.settings.limits =[self.settings.xmin, self.settings.xmax]
+			self.rangeDiv.selectAll('.reset').style('opacity', '.3').style('cursor', 'auto')
+		}
+		else {
+			self.settings.limits = extent
+			self.settings.dimension.filterRange(self.settings.limits);
+			self.rangeDiv.selectAll('.reset').style('opacity', '1').style('cursor', 'pointer')
+		}
+		d3.select('#' + self.settings.id + '-range-div span').text(self.settings.titleFormatter(self.settings.limits))
+		self.settings.updateAll()
+	}
+	self.brushstart = function() {
+		updateFunction()
+	}
+	
+	
+	self.brushend = function() {
+		updateFunction()
+	}
+	
+	self.brushmove = function() {
+		updateFunction()
+	}
+		
+	self.brush = d3.svg.brush()
+		.x(self.settings.x)
+		.on("brushstart", self.brushstart)
+		.on("brush", self.brushmove)
+		.on("brushend", self.brushend);
+}
 
-	  window.filter = function(filters) {
-		filters.forEach(function(d, i) { charts[i].filter(d); });
-		renderAll();
-	  };
-
-	  window.reset = function(i) {
-		charts[i].filter(null);
-		renderAll();
-	  };
+Bar.prototype.update = function() {
+	var self = this
+	self.g.selectAll('.bar').transition().duration(500)
+		.attr('height', function(d) {return self.settings.height - self.settings.y(d.value)})
+		.attr('y', function(d) {return self.settings.y(d.value)})
+		.attr('class', function(d) {
+			var klass = (d.key<self.settings.limits[0] | d.key>self.settings.limits[1]) ? 'bar gray' : 'bar'
+			return klass
+		})
 }
 
 
-function barChart() {
-		if (!barChart.id) barChart.id = 0;
-
-		var margin = {top: 10, right: 10, bottom: 20, left: 10},
-			x,
-			y,
-			// y = d3.scale.linear().range([300, 0]),
-			id = barChart.id++,
-			axis = d3.svg.axis().orient("bottom"),
-			brush = d3.svg.brush(),
-			brushDirty,
-			dimension,
-			group,
-			round;
-
-		function chart(div) {
-		  var width = x.range()[1]
-	//           height = y.range()[0];
-
-		  // y.domain([maxHourBikers,0 ]);
-		  div.each(function() {
-			var div = d3.select(this),
-				g = div.select("g");
-
-			// Create the skeletal chart.
-			if (g.empty()) {
-			  div.select(".title").append("a")
-				  .attr("href", "javascript:reset(" + id + ")")
-				  .attr("class", "reset")
-				  .text("reset")
-				  .style("display", "none");
-
-			  g = div.append("svg")
-				  .attr("width", width + margin.left + margin.right)
-				  .attr("height", settings.height + margin.top + margin.bottom)
-				  .attr('id', id)
-				.append("g")
-				  .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-				  g.selectAll('.bar').data(group.all())
-						.enter().append('rect')
-						.attr('x', function(d) {return x(d.key)})
-						.attr('y', function(d) {return settings.height - y(d.value)})
-						.attr('width', 1)
-						.attr('height', function(d) {return y(d.value)})
-						.attr('class', 'bar')
-
-
-			  g.append("g")
-				  .attr("class", "axis")
-				  .attr("transform", "translate(0," + settings.height + ")")
-				  .call(axis);
-
-			  // Initialize the brush component with pretty resize handles.
-			  var gBrush = g.append("g").attr("class", "brush").call(brush);
-			  gBrush.selectAll("rect").attr("height", settings.height);
-			}
-
-			// Only redraw the brush if set externally.
-			if (brushDirty) {
-			  brushDirty = false;
-			  g.selectAll(".brush").call(brush);
-			  div.select(".title a").style("display", brush.empty() ? "none" : null);
-			  if (brush.empty()) {
-				g.selectAll("#clip-" + id + " rect")
-					.attr("x", 0)
-					.attr("width", width);
-			  } else {
-				var extent = brush.extent();
-				g.selectAll("#clip-" + id + " rect")
-					.attr("x", x(extent[0]))
-					.attr("width", x(extent[1]) - x(extent[0]));
-			  }
-			}
-			g.selectAll(".bar").attr('x', function(d) {return x(d.key)})
-						.attr('y', function(d) {return settings.height - y(d.value)})
-						.attr('width', 1)
-						.attr('height', function(d) {return y(d.value)})
-		  });
-
-		}
-
-		brush.on("brushstart.chart", function() {
-		  var div = d3.select(this.parentNode.parentNode.parentNode);
-		  div.select(".title a").style("display", null);
-		});
-
-		brush.on("brush.chart", function() {
-			console.log('id ', this.parentNode.parentNode.id)
-			 var total = Number(d3.select('#total').text().replace(/,/g, ''))
-		 d3.selectAll("#percentage")
-		  .text(' (' + settings.formatters.percent(self.cf.all.reduceSum(function(d) {return d.value}).value()/total) + ' of total)');
-
-		  var g = d3.select(this.parentNode),
-			  extent = brush.extent();
-			  console.log(extent)
-			  if(this.parentNode.parentNode.id == 0) {
-				d3.select('#startdate').text(settings.formatters.titleDate(extent[0]))
-				d3.select('#enddate').text(settings.formatters.titleDate(extent[1]))
-			  }
-			  else if(this.parentNode.parentNode.id == 1) {
-		  
-				d3.select('#starttime').text('(' + settings.formatters.titleTime(extent[0]) + '-')
-				d3.select('#endtime').text(settings.formatters.titleTime(extent[1]) + ')')
-			  }
-		  if (round) g.select(".brush")
-			  .call(brush.extent(extent = extent.map(round)))
-			.selectAll(".resize")
-			  .style("display", null);
-		  g.select("#clip-" + id + " rect")
-			  .attr("x", x(extent[0]))
-			  .attr("width", x(extent[1]) - x(extent[0]));
-		  dimension.filterRange(extent);
-		});
-
-		brush.on("brushend.chart", function() {
-		  if (brush.empty()) {
-			var div = d3.select(this.parentNode.parentNode.parentNode);
-			div.select(".title a").style("display", "none");
-			div.select("#clip-" + id + " rect").attr("x", null).attr("width", "100%");
-			dimension.filterAll();
-			d3.selectAll("#percentage").text('')
-			d3.select('#startdate').text(settings.formatters.titleDate(minDate))
-			d3.select('#enddate').text(settings.formatters.titleDate(maxDate))
-			d3.select('#starttime').text('')
-			d3.select('#endtime').text('')
-		  }
-		});
-
-		chart.margin = function(_) {
-		  if (!arguments.length) return margin;
-		  margin = _;
-		  return chart;
-		};
-
-		chart.x = function(_) {
-		  if (!arguments.length) return x;
-		  x = _;
-		  axis.scale(x);
-		  brush.x(x);
-		  return chart;
-		};
-
-		chart.y = function(a) {
-		  if (!arguments.length) return y;
-		  y = a;
-		  return chart;
-		};
-
-		chart.dimension = function(_) {
-		  if (!arguments.length) return dimension;
-		  dimension = _;
-		  return chart;
-		};
-
-		chart.filter = function(_) {
-
-		  if (_) {
-			brush.extent(_);
-			dimension.filterRange(_);
-		  } else {
-			brush.clear();
-			dimension.filterAll();
-		  }
-		  brushDirty = true;
-		  return chart;
-		};
-
-		chart.group = function(_) {
-		  if (!arguments.length) return group;
-		  group = _;
-		  return chart;
-		};
-
-		chart.round = function(_) {
-		  if (!arguments.length) return round;
-		  round = _;
-		  return chart;
-		};
-
-		return d3.rebind(chart, brush, "on");
-	  }
-	// });
-// }
