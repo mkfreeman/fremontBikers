@@ -6,7 +6,7 @@ var App = function(sets) {
 		// reset title
 		var numBikers = self.cf.groupAll().reduceSum(function(d) {return d.value}).value()
 		var title = numBikers == self.total ? 'Bikers that Crossed the Fremont Bridge: ' + settings.formatters.number(numBikers) : 'Bikers that Crossed the Fremont Bridge: ' + settings.formatters.number(numBikers) + ' (' + settings.formatters.percent(numBikers/self.total) + ')'
-		d3.select('#header-title').text(title)
+		d3.select('#header-text').text(title)
 		self.charts.map(function(chart){
 			if(typeof(chart.update == 'function')) {
 				chart.update()
@@ -51,10 +51,8 @@ App.prototype.prepData = function() {
 
 App.prototype.build = function() {
 	var self = this
-	// Main div
 	var numBikers = settings.formatters.number(self.cf.groupAll().reduceSum(function(d) {return d.value}).value())
-	// d3.select('body').append('div').attr('id', settings.container)
-	d3.select('#' + settings.container).append('div').attr('id', 'header-title').text('Bikers that Crossed the Fremont Bridge: ' + numBikers)
+	d3.select('#header-text').text('Bikers that Crossed the Fremont Bridge: ' + numBikers)
 	self.charts = []
 	d3.keys(settings.charts).map(function(chart, index) {
 		self.charts[index] = settings.charts[chart].type == 'bar' ? new Bar(settings.charts[chart]) : new Pie(settings.charts[chart])

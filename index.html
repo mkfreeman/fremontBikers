@@ -12,7 +12,7 @@
 	<script src="js/settings.js"></script>
 	<script src="js/charts/bar.js"></script>
 	<script src="js/charts/pie.js"></script>
-	<script src="js/seabike.js"></script>
+	<script src="js/app.js"></script>
 	
 	<!-- css files -->
 	<link type="text/css" rel="stylesheet" href="css/seabike.css"/>
@@ -22,24 +22,31 @@
 </head>
 
 <body>
-	<div id="header">
-		<span>
-		<a href="https://twitter.com/share" class="twitter-share-button" data-via="mf_viz" data-count="none">Tweet</a>
-		</span>
-	</div>
-	<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
-	<div id="main"></div>
+	
+		<div id="main">
+			<div id="header-title">
+				<div id="header-text"></div>
+				</div>
+			</div>
+		</div>
 	
 	<!-- Instantiate app -->
 	<script type="text/javascript">
 		var app = new App()
 	</script>
+	
 	<div id="bottom">
-		<span>By  </span>
-		<a href = "http://www.linkedin.com/pub/michael-freeman/66/363/322" target="_blank">Mike Freeman</a>
-		<span>, using </span>
-		<a href="https://data.seattle.gov/Transportation/Fremont-Bridge-Hourly-Bicycle-Counts-by-Month-Octo/65db-xm6k" target="_blank">data</a>
-	 	<span>from </span>
-	 	<a href="https://data.seattle.gov/" target="_blank">data.seattle.gov</a>
+		<div id="bottom-left">
+			<a href="https://data.seattle.gov/Transportation/Fremont-Bridge-Hourly-Bicycle-Counts-by-Month-Octo/65db-xm6k" target="_blank">Data</a>
+			<span> is from </span>
+			<a href="https://data.seattle.gov/" target="_blank">data.seattle.gov</a>
+			<span>, built by </span>
+			<a href = "http://www.linkedin.com/pub/michael-freeman/66/363/322" target="_blank">Mike Freeman</a>
+		</div>
+		<div id="bottom-right">
+			<a href="https://twitter.com/mf_viz" class="twitter-follow-button" data-show-count="false">Follow @mf_viz</a>
+		</div>
 	</div>
+	<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+
 </body>
