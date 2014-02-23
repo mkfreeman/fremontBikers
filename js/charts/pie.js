@@ -39,7 +39,7 @@ Pie.prototype.build = function() {
 					self.settings.dimension.filter(null)
 					self.rangeDiv.selectAll('.reset').style('opacity', '.3').style('cursor', 'auto')
 					self.rangeDiv.select('span').text('Both')
-    				self.dataG.selectAll('.arc').attr('class', function(piece) {return 'arc'})
+    				self.paths.attr('class', function(piece) {return 'arc'})
 					self.settings.updateAll()				
 				})	
 	
@@ -62,7 +62,7 @@ Pie.prototype.build = function() {
      				self.settings.dimension.filter(d.data.key)
      				var direction = d.data.key == 'north' ? 'Northbound' : 'Southbound'
 					d3.select('#' + self.settings.id + '-range-div span').text(direction)
-     				self.dataG.selectAll('.arc').attr('class', function(piece) {return piece.data.key == d.data.key ? 'arc selected' : 'arc gray'})
+     				self.paths.attr('class', function(piece) {return piece.data.key == d.data.key ? 'arc selected' : 'arc gray'})
      				self.settings.updateAll()
      			})
      			.each(function(d) { this._current = d; })
