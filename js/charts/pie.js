@@ -10,10 +10,18 @@ Pie.prototype.init = function() {
 	self.arc = d3.svg.arc()
     	.outerRadius(self.settings.radius)
     	.innerRadius(0);
+    	
+   self.arcTween = function(a) {
+		var i = d3.interpolate(this._current, a);
+		this._current = i(0);
+		return function(t) {
+			return self.arc(i(t));
+		};
+	}
 
 	self.pieLayout = d3.layout.pie()
 		.sort(function(a,b) {return a.key<b.key})
-   		.value(function(d) {return d.value; });
+   		.value(function(d) {return d.value!=0 ? d.value : .001; });
 	
 	self.build()
 }
@@ -43,11 +51,9 @@ Pie.prototype.build = function() {
 	self.g = self.svg.append("g")
 				  .attr("transform", "translate(" + (self.settings.margin.left + self.settings.radius)+ "," + (self.settings.height/2 + 20) + ")");
 	
-	self.dataG = self.g.selectAll(".arc")
-					.data(self.pieLayout(self.data.all()), function(d) {return d.data.key})
-			    	.enter().append("g")	
-
- 	self.dataG.append("path")
+ 	self.paths = self.g.selectAll('.arc')
+ 				.data(self.pieLayout(self.data.all()), function(d) {return d.data.key})
+ 			    .enter().append("path")
     			.attr("d", self.arc)
     			.attr('class', 'arc')
      			.style("fill", function(d,i) { return self.settings.colors[i]; })
@@ -59,6 +65,8 @@ Pie.prototype.build = function() {
      				self.dataG.selectAll('.arc').attr('class', function(piece) {return piece.data.key == d.data.key ? 'arc selected' : 'arc gray'})
      				self.settings.updateAll()
      			})
+     			.each(function(d) { this._current = d; })
+     			
 	 if(typeof(self.settings.poshy) == 'function') self.settings.poshy(self)
 }
 
@@ -66,13 +74,16 @@ Pie.prototype.update =  function() {
 	var self = this
 	var currTotal = 0
 	self.data.all().map(function(d) {currTotal += d.value})
-	var newRadius = self.settings.radius*currTotal/self.settings.total
-	self.arc = d3.svg.arc()
-    	.outerRadius(newRadius)
-    	.innerRadius(0);
-    	
-    // self.dataG.data(self.pieLayout(self.data.all()), function(d) {return d.data.key})
-    self.dataG.selectAll('.arc').transition().duration(500).attr("d", self.arc)
-	// $('#' + self.settings.id + '-svg .arc').poshytip('destroy')
-	// if(typeof(self.settings.poshy) == 'function') self.settings.poshy(self)
+	var newRadius = self.settings.radius*currTotal/self.settings.total 
+	
+	self.paths.data(self.pieLayout(self.data.all()), function(d) {return d.data.key})
+
+	self.paths.transition().duration(500).attrTween('d', function(a) {
+		var i = d3.interpolate(this._current, a),
+		k = d3.interpolate(self.arc.outerRadius()(), newRadius);
+		this._current = i(0);
+		return function(t) {
+			 return self.arc.innerRadius(0).outerRadius(k(t))(i(t));
+		 };
+	});  
 }
