@@ -14,9 +14,8 @@ var settings = {
 			id:'date', 
 			type:'bar', 
 			container:'main',
-			dimensionFunc:function(d) { return d.date},
+			dimensionFunc:function(d) { return d.starttime},
 			groupFunc:d3.time.day,
- 			// round:function(d) {return d3.time.dayOfYear(d) + d3.time.year(d)},
 			height:270, 
 			width:1030, 
 				margin:{
@@ -28,7 +27,7 @@ var settings = {
 			x:d3.time.scale(),
 			y:d3.scale.linear(), 
 			ticks:{
-				x:20,
+				x:6,
 				y:0
 			},
 			format:{
@@ -56,11 +55,11 @@ var settings = {
 			
 		
 		}, 
-		time:{
+	time:{
 			id:'time', 
 			type:'bar', 
 			container:'main',
-			dimensionFunc:function(d) { return d.date.getHours() + d.date.getMinutes() / 60;},
+			dimensionFunc:function(d) { return d.starttime.getHours() + d.starttime.getMinutes() / 60;},
 			groupFunc:Math.floor,
 			height:270, 
 			width:300, 
@@ -108,7 +107,7 @@ var settings = {
 			id:'day', 			
 			type:'bar', 
 			container:'main',
-			dimensionFunc:function(d) { return d.date.getDay()},
+			dimensionFunc:function(d) { return d.starttime.getDay()},
 			groupFunc:'none',
 			height:270, 
 			width:300, 
@@ -152,11 +151,11 @@ var settings = {
 				right:.3
 			}
 		},
-		direction:{
-			id:'direction', 
+		sex:{
+			id:'sex', 
 			type:'pie', 
 			container:'main',
-			dimensionFunc:function(d) { return d.direction},
+			dimensionFunc:function(d) { return d.sex},
 			groupFunc:'none',
 			height:270, 
 			width:300, 
@@ -170,8 +169,8 @@ var settings = {
 			format: {
 				y:d3.format(",d"), 
 			},
-			title:'Bikers By Direction',
-			colors:['steelblue', 'orange'], 
+			title:'Bikers By Gender',
+			colors:['steelblue', '#DDA030', 'gray'], 
 			poshy:function(chart) {
 				$('#' + chart.settings.id + '-svg .arc').poshytip({
 					slide: false, 
@@ -185,9 +184,9 @@ var settings = {
 					offsetY: 10,
 					content: function(a,tip){
 						var text = ''
-						var dir = this.__data__.data.key == 'north' ? 'Northbound' : 'Southbound'
+						var sex = this.__data__.data.key
  						var bikers = chart.settings.format.y(this.__data__.data.value)
-						text += '<b>' + dir + '</b></br>'
+						text += '<b>' + sex + '</b></br>'
 						text += 'Bikers: ' + bikers
 						return text
 						// return self.content(this.__data__.properties.location_id)

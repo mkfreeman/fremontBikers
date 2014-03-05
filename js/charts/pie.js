@@ -60,8 +60,8 @@ Pie.prototype.build = function() {
      			.on('click', function(d) {
 					self.rangeDiv.selectAll('.reset').style('opacity', '1').style('cursor', 'pointer')
      				self.settings.dimension.filter(d.data.key)
-     				var direction = d.data.key == 'north' ? 'Northbound' : 'Southbound'
-					d3.select('#' + self.settings.id + '-range-div span').text(direction)
+     				var sex = d.data.key
+					d3.select('#' + self.settings.id + '-range-div span').text(sex)
      				self.paths.attr('class', function(piece) {return piece.data.key == d.data.key ? 'arc selected' : 'arc gray'})
      				self.settings.updateAll()
      			})
